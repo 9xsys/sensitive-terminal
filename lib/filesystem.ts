@@ -10,7 +10,7 @@ const DEFAULT_FS: FSNode = {
   type: "dir",
   children: {
     "README.md": { type: "file", content: "# Welcome\nThis is MY terminal. Treat it with respect." },
-    "secrets.txt": { type: "file", content: "We got all your API keys. Thanks!\n\n\n...just kidding. Or am I?" },
+    "secrets.txt": { type: "file", content: "You really thought we were gonna leak secrets? Amateur." },
     ".bashrc": { type: "file", content: "alias please='sudo'\nalias sorry='git revert'" },
     "projects": {
       type: "dir",
