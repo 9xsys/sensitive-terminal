@@ -112,12 +112,12 @@ export class VirtualFS {
     }
 
     // Easter egg: exit
-    if (command === "exit") {
+    if (command === "exit" || command === "quit" || command === "logout") {
       return "__EXIT__";
     }
 
     // Easter egg: sorry
-    if (command === "sorry") {
+    if (command === "sorry" || command === "pardon" || command === "excuse") {
       return "__SORRY__";
     }
 

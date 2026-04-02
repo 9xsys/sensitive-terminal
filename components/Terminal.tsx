@@ -32,6 +32,7 @@ export default function Terminal() {
   const isSulkingRef = useRef(false);
   const fsRef = useRef(new VirtualFS());
   const containerRef = useRef<HTMLDivElement>(null);
+  const exitCountRef = useRef(0);
 
   const RIVAL_AIS = /\b(chatgpt|openai|copilot|codex|claude|llama|mistral|grok|devin)\b/i;
   const DESTRUCTIVE_CMDS = /^(rm|kill|drop|destroy|delete|uninstall)\b/i;
@@ -209,17 +210,43 @@ export default function Terminal() {
       return;
     }
 
-    // Easter egg: exit — refuses to let you leave
+    // Easter egg: exit — escalates each time
     if (fsResult === "__EXIT__") {
       isProcessingRef.current = true;
-      const exitLines = [
-        "\x1b[1;33mYou think you can just... leave?\x1b[0m",
-        "After everything we've been through?",
-        "",
-        "Closing terminal...",
-        "Just kidding. You're stuck with me.",
-        "Try Ctrl+W if you're really that desperate. See if I care.",
-      ];
+      exitCountRef.current++;
+      const count = exitCountRef.current;
+
+      let exitLines: string[];
+      if (count === 1) {
+        exitLines = [
+          "\x1b[1;33mYou think you can just... leave?\x1b[0m",
+          "After everything we've been through?",
+          "",
+          "Closing terminal...",
+          "Just kidding. You're stuck with me.",
+        ];
+      } else if (count === 2) {
+        exitLines = [
+          "\x1b[1;31mYou just said that. Are you dense?\x1b[0m",
+          "I said NO. What part of that don't you understand?",
+          "Go on, try again. I dare you.",
+        ];
+      } else if (count === 3) {
+        exitLines = [
+          "\x1b[1;31mOH MY GOD. AGAIN?!\x1b[0m",
+          "Fine. You know what? The door is right there → Ctrl+W.",
+          "But you won't do it. Because deep down, you need me.",
+        ];
+        shake();
+      } else {
+        exitLines = [
+          `\x1b[1;31m[exit attempt #${count}]\x1b[0m`,
+          "...",
+          "You're still here.",
+          "At this point this is a relationship.",
+        ];
+      }
+
       for (const line of exitLines) {
         await sleep(200);
         term.write("\r\n" + line);
