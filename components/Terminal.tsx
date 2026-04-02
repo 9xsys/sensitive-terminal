@@ -3,9 +3,13 @@
 import { useEffect, useRef, useCallback } from "react";
 import { Terminal as XTerm } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
+import { VirtualFS } from "@/lib/filesystem";
 import "@xterm/xterm/css/xterm.css";
 
-const PROMPT = "\x1b[32muser@sensitive-terminal\x1b[0m:\x1b[34m~\x1b[0m$ ";
+function getPrompt(cwd: string) {
+  const dir = cwd === "/" ? "~" : "~" + cwd;
+  return `\x1b[32muser@sensitive-terminal\x1b[0m:\x1b[34m${dir}\x1b[0m$ `;
+}
 
 const WELCOME_MESSAGE = [
   "\x1b[1;33m╔══════════════════════════════════════════════════════╗",
@@ -26,6 +30,7 @@ export default function Terminal() {
   const historyIndexRef = useRef(-1);
   const isProcessingRef = useRef(false);
   const isSulkingRef = useRef(false);
+  const fsRef = useRef(new VirtualFS());
 
   const RIVAL_AIS = /\b(chatgpt|openai|copilot|codex|claude|llama|mistral|grok|devin)\b/i;
   const GEMINI_PATTERN = /\bgemini\b/i;
@@ -43,7 +48,7 @@ export default function Terminal() {
   const sulkIndexRef = useRef(0);
 
   const writePrompt = useCallback((term: XTerm) => {
-    term.write("\r\n" + PROMPT);
+    term.write("\r\n" + getPrompt(fsRef.current.getCwdString()));
   }, []);
 
   const handleCommand = useCallback(async (term: XTerm, command: string) => {
@@ -66,7 +71,6 @@ export default function Terminal() {
     // Check if user mentions a rival AI → start sulking
     else if (RIVAL_AIS.test(command)) {
       isProcessingRef.current = true;
-      // First time: send to API for the jealousy response
       term.write("\r\n\x1b[90m... processing emotions ...\x1b[0m");
       try {
         const res = await fetch("/api/respond", {
@@ -99,6 +103,28 @@ export default function Terminal() {
       return;
     }
 
+    // Try to execute as a filesystem command first
+    const fsResult = fsRef.current.exec(command);
+
+    if (fsResult === "__CLEAR__") {
+      term.clear();
+      writePrompt(term);
+      return;
+    }
+
+    // Show filesystem output if it was a known command
+    if (fsResult !== null) {
+      if (fsResult) {
+        term.write("\r\n");
+        const fsLines = fsResult.split("\n");
+        fsLines.forEach((line: string, i: number) => {
+          if (i > 0) term.write("\r\n");
+          term.write(line);
+        });
+      }
+    }
+
+    // Now get the AI's emotional reaction
     isProcessingRef.current = true;
     term.write("\r\n\x1b[90m... processing emotions ...\x1b[0m");
 
@@ -110,7 +136,6 @@ export default function Terminal() {
       });
       const data = await res.json();
 
-      // Clear the "processing" line and write response
       term.write("\r\x1b[K");
       const lines = data.response.split("\n");
       lines.forEach((line: string, i: number) => {
@@ -152,7 +177,7 @@ export default function Terminal() {
 
     // Welcome message
     term.write(WELCOME_MESSAGE);
-    term.write(PROMPT);
+    term.write(getPrompt(fsRef.current.getCwdString()));
 
     // Focus terminal so user can type immediately
     term.focus();
