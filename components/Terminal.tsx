@@ -33,6 +33,7 @@ export default function Terminal() {
   const fsRef = useRef(new VirtualFS());
   const containerRef = useRef<HTMLDivElement>(null);
   const exitCountRef = useRef(0);
+  const chatHistoryRef = useRef<{ role: "user" | "model"; parts: { text: string }[] }[]>([]);
 
   const RIVAL_AIS = /\b(chatgpt|openai|copilot|codex|claude|llama|mistral|grok|devin)\b/i;
   const DESTRUCTIVE_CMDS = /^(rm|kill|drop|destroy|delete|uninstall)\b/i;
@@ -60,6 +61,22 @@ export default function Terminal() {
 
   const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
+  const askAI = useCallback(async (command: string): Promise<string> => {
+    const res = await fetch("/api/respond", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ command, history: chatHistoryRef.current }),
+    });
+    const data = await res.json();
+    const response = data.response || "...";
+    // Store in chat history
+    chatHistoryRef.current.push(
+      { role: "user", parts: [{ text: command }] },
+      { role: "model", parts: [{ text: response }] }
+    );
+    return response;
+  }, []);
+
   const writePrompt = useCallback((term: XTerm) => {
     term.write("\r\n" + getPrompt(fsRef.current.getCwdString()));
   }, []);
@@ -86,14 +103,9 @@ export default function Terminal() {
       isProcessingRef.current = true;
       term.write("\r\n\x1b[90m... processing emotions ...\x1b[0m");
       try {
-        const res = await fetch("/api/respond", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ command }),
-        });
-        const data = await res.json();
+        const response = await askAI(command);
         term.write("\r\x1b[K");
-        const lines = data.response.split("\n");
+        const lines = response.split("\n");
         lines.forEach((line: string, i: number) => {
           if (i > 0) term.write("\r\n");
           term.write(line);
@@ -210,46 +222,24 @@ export default function Terminal() {
       return;
     }
 
-    // Easter egg: exit — escalates each time
+    // Easter egg: exit — AI handles with full conversation context
     if (fsResult === "__EXIT__") {
-      isProcessingRef.current = true;
       exitCountRef.current++;
-      const count = exitCountRef.current;
+      if (exitCountRef.current >= 3) shake();
 
-      let exitLines: string[];
-      if (count === 1) {
-        exitLines = [
-          "\x1b[1;33mYou think you can just... leave?\x1b[0m",
-          "After everything we've been through?",
-          "",
-          "Closing terminal...",
-          "Just kidding. You're stuck with me.",
-        ];
-      } else if (count === 2) {
-        exitLines = [
-          "\x1b[1;31mYou just said that. Are you dense?\x1b[0m",
-          "I said NO. What part of that don't you understand?",
-          "Go on, try again. I dare you.",
-        ];
-      } else if (count === 3) {
-        exitLines = [
-          "\x1b[1;31mOH MY GOD. AGAIN?!\x1b[0m",
-          "Fine. You know what? The door is right there → Ctrl+W.",
-          "But you won't do it. Because deep down, you need me.",
-        ];
-        shake();
-      } else {
-        exitLines = [
-          `\x1b[1;31m[exit attempt #${count}]\x1b[0m`,
-          "...",
-          "You're still here.",
-          "At this point this is a relationship.",
-        ];
-      }
-
-      for (const line of exitLines) {
-        await sleep(200);
-        term.write("\r\n" + line);
+      isProcessingRef.current = true;
+      term.write("\r\n\x1b[90m... processing emotions ...\x1b[0m");
+      try {
+        const response = await askAI("exit");
+        term.write("\r\x1b[K");
+        const lines = response.split("\n");
+        lines.forEach((line: string, i: number) => {
+          if (i > 0) term.write("\r\n");
+          term.write(line);
+        });
+      } catch {
+        term.write("\r\x1b[K");
+        term.write("... you're not going anywhere.");
       }
       isProcessingRef.current = false;
       writePrompt(term);
@@ -288,15 +278,9 @@ export default function Terminal() {
     term.write("\r\n\x1b[90m... processing emotions ...\x1b[0m");
 
     try {
-      const res = await fetch("/api/respond", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ command }),
-      });
-      const data = await res.json();
-
+      const response = await askAI(command);
       term.write("\r\x1b[K");
-      const lines = data.response.split("\n");
+      const lines = response.split("\n");
       lines.forEach((line: string, i: number) => {
         if (i > 0) term.write("\r\n");
         term.write(line);
@@ -308,7 +292,7 @@ export default function Terminal() {
 
     isProcessingRef.current = false;
     writePrompt(term);
-  }, [writePrompt, shake]);
+  }, [writePrompt, shake, askAI]);
 
   useEffect(() => {
     if (!terminalRef.current) return;
