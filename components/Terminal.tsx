@@ -287,9 +287,9 @@ export default function Terminal() {
     isProcessingRef.current = true;
     term.write("\r\n\x1b[90m... processing emotions ...\x1b[0m");
 
-    // If user made an error, tell the AI so it can mock them
+    // If user made an error, tell the AI so it can mock them for the ERROR, not the command intent
     const aiCommand = isError
-      ? `${command}\n[The user made an error: "${fsResult}". Mock them for being incompetent. Be brutal.]`
+      ? `[IGNORE the command intent. The user typed "${command}" but it FAILED with error: "${fsResult}". They made a dumb mistake. Mock the ERROR itself, not what they were trying to do. For example if they typed "rm -rf" without a target, mock them for forgetting the argument, not for trying to delete. Be brutal about how incompetent they are.]`
       : command;
 
     try {
