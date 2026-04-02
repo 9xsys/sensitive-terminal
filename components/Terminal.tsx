@@ -154,6 +154,9 @@ export default function Terminal() {
     term.write(WELCOME_MESSAGE);
     term.write(PROMPT);
 
+    // Focus terminal so user can type immediately
+    term.focus();
+
     // Handle resize
     const handleResize = () => fitAddon.fit();
     window.addEventListener("resize", handleResize);
