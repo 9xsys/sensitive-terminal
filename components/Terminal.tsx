@@ -213,7 +213,7 @@ export default function Terminal() {
           historyIndexRef.current = newIndex;
           const historyCommand = historyRef.current[newIndex];
           // Clear current input
-          term.write("\r" + PROMPT + " ".repeat(inputRef.current.length) + "\r" + PROMPT);
+          term.write("\r" + getPrompt(fsRef.current.getCwdString()) + " ".repeat(inputRef.current.length) + "\r" + getPrompt(fsRef.current.getCwdString()));
           term.write(historyCommand);
           inputRef.current = historyCommand;
         }
@@ -222,12 +222,12 @@ export default function Terminal() {
         if (historyIndexRef.current > 0) {
           historyIndexRef.current -= 1;
           const historyCommand = historyRef.current[historyIndexRef.current];
-          term.write("\r" + PROMPT + " ".repeat(inputRef.current.length) + "\r" + PROMPT);
+          term.write("\r" + getPrompt(fsRef.current.getCwdString()) + " ".repeat(inputRef.current.length) + "\r" + getPrompt(fsRef.current.getCwdString()));
           term.write(historyCommand);
           inputRef.current = historyCommand;
         } else if (historyIndexRef.current === 0) {
           historyIndexRef.current = -1;
-          term.write("\r" + PROMPT + " ".repeat(inputRef.current.length) + "\r" + PROMPT);
+          term.write("\r" + getPrompt(fsRef.current.getCwdString()) + " ".repeat(inputRef.current.length) + "\r" + getPrompt(fsRef.current.getCwdString()));
           inputRef.current = "";
         }
       } else if (domEvent.key.length === 1 && !domEvent.ctrlKey && !domEvent.altKey) {
