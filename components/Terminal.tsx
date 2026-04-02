@@ -261,6 +261,16 @@ export default function Terminal() {
       shake();
     }
 
+    // Check if the FS result is an error message
+    const isError = fsResult !== null && fsResult !== "" && (
+      fsResult.includes("No such file") ||
+      fsResult.includes("Is a directory") ||
+      fsResult.includes("Not a directory") ||
+      fsResult.includes("File exists") ||
+      fsResult.includes("missing operand") ||
+      fsResult.includes("cannot remove")
+    );
+
     // Show filesystem output if it was a known command
     if (fsResult !== null) {
       if (fsResult) {
@@ -277,8 +287,13 @@ export default function Terminal() {
     isProcessingRef.current = true;
     term.write("\r\n\x1b[90m... processing emotions ...\x1b[0m");
 
+    // If user made an error, tell the AI so it can mock them
+    const aiCommand = isError
+      ? `${command}\n[The user made an error: "${fsResult}". Mock them for being incompetent. Be brutal.]`
+      : command;
+
     try {
-      const response = await askAI(command);
+      const response = await askAI(aiCommand);
       term.write("\r\x1b[K");
       const lines = response.split("\n");
       lines.forEach((line: string, i: number) => {
