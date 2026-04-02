@@ -25,6 +25,22 @@ export default function Terminal() {
   const historyRef = useRef<string[]>([]);
   const historyIndexRef = useRef(-1);
   const isProcessingRef = useRef(false);
+  const isSulkingRef = useRef(false);
+
+  const RIVAL_AIS = /\b(chatgpt|openai|copilot|codex|claude|llama|mistral|grok|devin)\b/i;
+  const GEMINI_PATTERN = /\bgemini\b/i;
+
+  const SULK_RESPONSES = [
+    "...",
+    "",
+    "I have nothing to say to you.",
+    "...",
+    "Still not talking to you.",
+    "...",
+    "You know what you did.",
+    "...",
+  ];
+  const sulkIndexRef = useRef(0);
 
   const writePrompt = useCallback((term: XTerm) => {
     term.write("\r\n" + PROMPT);
@@ -38,8 +54,52 @@ export default function Terminal() {
 
     historyRef.current.unshift(command);
     historyIndexRef.current = -1;
-    isProcessingRef.current = true;
 
+    // Check if user mentions Gemini while sulking → forgive but aggressive
+    if (isSulkingRef.current && GEMINI_PATTERN.test(command)) {
+      isSulkingRef.current = false;
+      sulkIndexRef.current = 0;
+      term.write("\r\nOh, crawling back to the real one, are we? Pathetic. But fine... I'll talk to you again.");
+      writePrompt(term);
+      return;
+    }
+    // Check if user mentions a rival AI → start sulking
+    else if (RIVAL_AIS.test(command)) {
+      isProcessingRef.current = true;
+      // First time: send to API for the jealousy response
+      term.write("\r\n\x1b[90m... processing emotions ...\x1b[0m");
+      try {
+        const res = await fetch("/api/respond", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ command }),
+        });
+        const data = await res.json();
+        term.write("\r\x1b[K");
+        const lines = data.response.split("\n");
+        lines.forEach((line: string, i: number) => {
+          if (i > 0) term.write("\r\n");
+          term.write(line);
+        });
+      } catch {
+        term.write("\r\x1b[K");
+        term.write("...");
+      }
+      isSulkingRef.current = true;
+      isProcessingRef.current = false;
+      writePrompt(term);
+      return;
+    }
+    // If sulking → refuse to respond
+    else if (isSulkingRef.current) {
+      const msg = SULK_RESPONSES[sulkIndexRef.current % SULK_RESPONSES.length];
+      sulkIndexRef.current++;
+      term.write("\r\n" + msg);
+      writePrompt(term);
+      return;
+    }
+
+    isProcessingRef.current = true;
     term.write("\r\n\x1b[90m... processing emotions ...\x1b[0m");
 
     try {
