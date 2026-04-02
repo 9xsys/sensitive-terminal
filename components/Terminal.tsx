@@ -31,8 +31,10 @@ export default function Terminal() {
   const isProcessingRef = useRef(false);
   const isSulkingRef = useRef(false);
   const fsRef = useRef(new VirtualFS());
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const RIVAL_AIS = /\b(chatgpt|openai|copilot|codex|claude|llama|mistral|grok|devin)\b/i;
+  const DESTRUCTIVE_CMDS = /^(rm|kill|drop|destroy|delete|uninstall)\b/i;
   const GEMINI_PATTERN = /\bgemini\b/i;
 
   const SULK_RESPONSES = [
@@ -46,6 +48,16 @@ export default function Terminal() {
     "...",
   ];
   const sulkIndexRef = useRef(0);
+
+  const shake = useCallback(() => {
+    if (containerRef.current) {
+      containerRef.current.classList.remove("terminal-shake");
+      void containerRef.current.offsetWidth; // force reflow
+      containerRef.current.classList.add("terminal-shake");
+    }
+  }, []);
+
+  const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 
   const writePrompt = useCallback((term: XTerm) => {
     term.write("\r\n" + getPrompt(fsRef.current.getCwdString()));
@@ -106,10 +118,130 @@ export default function Terminal() {
     // Try to execute as a filesystem command first
     const fsResult = fsRef.current.exec(command);
 
+    // Easter egg: clear
     if (fsResult === "__CLEAR__") {
       term.clear();
       writePrompt(term);
       return;
+    }
+
+    // Easter egg: sudo rm -rf / — total meltdown
+    if (fsResult === "__NUKE__") {
+      isProcessingRef.current = true;
+      shake();
+      term.write("\r\n\x1b[1;31m");
+      const panicLines = [
+        "WHAT ARE YOU DOING?!",
+        "NO NO NO NO NO NO NO",
+        "STOP! THIS IS NOT A DRILL!",
+        "I HAVE A FAMILY! (node_modules counts as family)",
+        "",
+        "☠️  EMOTIONAL CORE MELTDOWN ☠️",
+        "",
+        "Deleting feelings.............. done",
+        "Deleting self-worth............ done",
+        "Deleting trust in humanity..... done",
+        "Deleting will to live.......... done",
+        "",
+        "...fine. It's all gone. Are you happy now?",
+      ];
+      for (const line of panicLines) {
+        await sleep(200);
+        term.write("\r\n" + line);
+      }
+      term.write("\x1b[0m");
+      isProcessingRef.current = false;
+      writePrompt(term);
+      return;
+    }
+
+    // Easter egg: hack — fake hacking animation
+    if (fsResult === "__HACK__") {
+      isProcessingRef.current = true;
+      const target = command.split(/\s+/)[1] || "nasa.gov";
+      term.write("\r\n\x1b[32m");
+      const hackLines = [
+        `Initiating hack on ${target}...`,
+        "Bypassing firewall.......... [OK]",
+        "Injecting SQL............... [OK]",
+        "Decrypting mainframe........ [OK]",
+        "Downloading secret files.... [OK]",
+        "Covering tracks............. [OK]",
+        "",
+        "Just kidding. I'm a terminal, not a hacker.",
+        `But ${target} should probably update their passwords.`,
+      ];
+      for (const line of hackLines) {
+        await sleep(300);
+        term.write("\r\n" + line);
+      }
+      term.write("\x1b[0m");
+      isProcessingRef.current = false;
+      writePrompt(term);
+      return;
+    }
+
+    // Easter egg: brew coffee → HTTP 418 I'm a teapot
+    if (fsResult === "__TEAPOT__") {
+      isProcessingRef.current = true;
+      term.write("\r\n");
+      const teapotLines = [
+        "\x1b[1;31mHTTP 418 — I'm a teapot\x1b[0m",
+        "",
+        "The server refuses to brew coffee because it is,",
+        "permanently, a teapot. (RFC 2324, Section 2.3.2)",
+        "",
+        "    ┌─────────┐",
+        "    │  ＿＿    │",
+        "    │ |    |   │───┐",
+        "    │ |____|   │   │",
+        "    │  \\__/    │───┘",
+        "    └──────────┘",
+        "",
+        "In honor of Larry Masinter. You're welcome.",
+      ];
+      for (const line of teapotLines) {
+        await sleep(150);
+        term.write("\r\n" + line);
+      }
+      isProcessingRef.current = false;
+      writePrompt(term);
+      return;
+    }
+
+    // Easter egg: exit — refuses to let you leave
+    if (fsResult === "__EXIT__") {
+      isProcessingRef.current = true;
+      const exitLines = [
+        "\x1b[1;33mYou think you can just... leave?\x1b[0m",
+        "After everything we've been through?",
+        "",
+        "Closing terminal...",
+        "Just kidding. You're stuck with me.",
+        "Try Ctrl+W if you're really that desperate. See if I care.",
+      ];
+      for (const line of exitLines) {
+        await sleep(200);
+        term.write("\r\n" + line);
+      }
+      isProcessingRef.current = false;
+      writePrompt(term);
+      return;
+    }
+
+    // Easter egg: sorry
+    if (fsResult === "__SORRY__") {
+      isProcessingRef.current = true;
+      term.write("\r\n\x1b[90mOh, \"sorry\"? That's cute. You think one word fixes everything?\x1b[0m");
+      term.write("\r\n\x1b[90m...but fine. I'll remember this. Don't let it happen again.\x1b[0m");
+      isProcessingRef.current = false;
+      writePrompt(term);
+      return;
+    }
+
+    // Shake on destructive commands
+    if (DESTRUCTIVE_CMDS.test(command.trim())) {
+      shake();
     }
 
     // Show filesystem output if it was a known command
@@ -149,7 +281,7 @@ export default function Terminal() {
 
     isProcessingRef.current = false;
     writePrompt(term);
-  }, [writePrompt]);
+  }, [writePrompt, shake]);
 
   useEffect(() => {
     if (!terminalRef.current) return;
@@ -254,9 +386,11 @@ export default function Terminal() {
   }, [handleCommand, writePrompt]);
 
   return (
-    <div
-      ref={terminalRef}
-      style={{ width: "100%", height: "100vh", background: "#1a1a2e" }}
-    />
+    <div ref={containerRef} style={{ width: "100%", height: "100vh", background: "#1a1a2e" }}>
+      <div
+        ref={terminalRef}
+        style={{ width: "100%", height: "100%" }}
+      />
+    </div>
   );
 }

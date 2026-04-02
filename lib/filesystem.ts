@@ -96,6 +96,31 @@ export class VirtualFS {
     const [cmd, ...args] = trimmed.split(/\s+/);
     const command = cmd.toLowerCase();
 
+    // Easter egg: sudo rm -rf /
+    if (trimmed === "sudo rm -rf /" || trimmed === "sudo rm -rf /*") {
+      return "__NUKE__";
+    }
+
+    // Easter egg: hack
+    if (command === "hack") {
+      return "__HACK__";
+    }
+
+    // Easter egg: brew coffee → HTTP 418
+    if (trimmed === "brew coffee" || trimmed === "make coffee") {
+      return "__TEAPOT__";
+    }
+
+    // Easter egg: exit
+    if (command === "exit") {
+      return "__EXIT__";
+    }
+
+    // Easter egg: sorry
+    if (command === "sorry") {
+      return "__SORRY__";
+    }
+
     switch (command) {
       case "ls": return this.ls(args[0]);
       case "cd": return this.cd(args[0]);
