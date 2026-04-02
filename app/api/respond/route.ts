@@ -1,16 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getModel } from "@/lib/gemini";
+import { checkRateLimit } from "@/lib/ratelimit";
 
 interface HistoryEntry {
   role: "user" | "model";
   parts: { text: string }[];
 }
 
+const RATE_LIMIT_MSG =
+  "I'd love to roast you right now, but I've been talking too much today. " +
+  "Ask the dev to upgrade my vocal cords: https://dev.to/valentin_monteiro";
+
 export async function POST(request: NextRequest) {
   const { command, history } = await request.json();
 
   if (!command || typeof command !== "string") {
     return NextResponse.json({ error: "No command provided" }, { status: 400 });
+  }
+
+  const { allowed } = checkRateLimit();
+  if (!allowed) {
+    return NextResponse.json({ response: RATE_LIMIT_MSG });
   }
 
   try {
