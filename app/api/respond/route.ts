@@ -35,8 +35,15 @@ export async function POST(request: NextRequest) {
     const text = result.response.text();
 
     return NextResponse.json({ response: text });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Gemini API error:", error);
+
+    // Detect rate limit from Google (429) or quota errors
+    const errMsg = error instanceof Error ? error.message : String(error);
+    if (errMsg.includes("429") || errMsg.includes("quota") || errMsg.includes("RESOURCE_EXHAUSTED")) {
+      return NextResponse.json({ response: RATE_LIMIT_MSG });
+    }
+
     return NextResponse.json(
       { response: "... *stares blankly* ... I have nothing to say to you right now." },
       { status: 200 }
