@@ -121,6 +121,13 @@ export class VirtualFS {
       return "__SORRY__";
     }
 
+    // Guestbook: wall
+    if (command === "wall") {
+      const msg = args.join(" ").replace(/^["']|["']$/g, "");
+      if (!msg) return "__WALL_READ__";
+      return "__WALL_WRITE__:" + msg;
+    }
+
     switch (command) {
       case "ls": return this.ls(args[0]);
       case "cd": return this.cd(args[0]);

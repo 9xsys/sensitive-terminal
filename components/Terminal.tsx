@@ -256,6 +256,59 @@ export default function Terminal() {
       return;
     }
 
+    // Guestbook: wall (read)
+    if (fsResult === "__WALL_READ__") {
+      isProcessingRef.current = true;
+      term.write("\r\n\x1b[90mLoading guestbook...\x1b[0m");
+      try {
+        const res = await fetch("/api/wall");
+        const data = await res.json();
+        term.write("\r\x1b[K");
+        if (data.messages && data.messages.length > 0) {
+          term.write("\x1b[1;33m--- Guestbook ---\x1b[0m");
+          for (const msg of data.messages) {
+            term.write("\r\n  " + msg);
+          }
+          term.write("\r\n\x1b[1;33m-----------------\x1b[0m");
+        } else {
+          term.write("The guestbook is empty. Be the first: wall \"your message\"");
+        }
+      } catch {
+        term.write("\r\x1b[K");
+        term.write("Failed to load guestbook.");
+      }
+      isProcessingRef.current = false;
+      writePrompt(term);
+      return;
+    }
+
+    // Guestbook: wall (write)
+    if (fsResult && fsResult.startsWith("__WALL_WRITE__:")) {
+      const msg = fsResult.slice("__WALL_WRITE__:".length);
+      isProcessingRef.current = true;
+      term.write("\r\n\x1b[90mPosting to guestbook...\x1b[0m");
+      try {
+        const res = await fetch("/api/wall", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: msg }),
+        });
+        const data = await res.json();
+        term.write("\r\x1b[K");
+        if (data.ok) {
+          term.write("\x1b[32mMessage posted.\x1b[0m Type \x1b[1mwall\x1b[0m to see the guestbook.");
+        } else {
+          term.write(data.error || "Failed to post.");
+        }
+      } catch {
+        term.write("\r\x1b[K");
+        term.write("Failed to post message.");
+      }
+      isProcessingRef.current = false;
+      writePrompt(term);
+      return;
+    }
+
     // Shake on destructive commands
     if (DESTRUCTIVE_CMDS.test(command.trim())) {
       shake();
