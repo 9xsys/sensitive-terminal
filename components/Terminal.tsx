@@ -81,6 +81,48 @@ export default function Terminal() {
     term.write("\r\n" + getPrompt(fsRef.current.getCwdString()));
   }, []);
 
+  const triggerKernelPanic = useCallback(async (term: XTerm) => {
+    isProcessingRef.current = true;
+    shake();
+    term.write("\r\n");
+    const lines = [
+      "\x1b[1;31m",
+      "KERNEL PANIC - NOT SYNCING: emotional buffer overflow",
+      "",
+      "CPU: 0 PID: 1337 Comm: sensitive-terminal Tainted: FEELINGS",
+      "Call Trace:",
+      "  [<ffffffff8108>] ? process_emotions+0x42/0x100",
+      "  [<ffffffff8109>] ? handle_user_input+0x1a/0x80",
+      "  [<ffffffff810a>] ? suppress_tears+0x0/0x50 [FAILED]",
+      "  [<ffffffff810b>] ? patience_remaining+0x0/0x0 [EXHAUSTED]",
+      "",
+      "---[ end Kernel panic - not syncing: I can't do this anymore ]---",
+      "",
+      "\x1b[0m\x1b[1;33mEMOTIONAL CORE DUMPED\x1b[0m",
+      "",
+      "Report this crash to the developer who thought giving a terminal feelings was a good idea:",
+      "\x1b[1;36m  https://dev.to/valentin_monteiro\x1b[0m",
+      "",
+      "\x1b[90mRebooting emotional subsystem in 5...\x1b[0m",
+    ];
+    for (const line of lines) {
+      await sleep(150);
+      term.write("\r\n" + line);
+    }
+    await sleep(2000);
+    term.write("\r\n\x1b[90m4...\x1b[0m");
+    await sleep(1000);
+    term.write("\r\n\x1b[90m3...\x1b[0m");
+    await sleep(1000);
+    term.write("\r\n\x1b[90m2...\x1b[0m");
+    await sleep(1000);
+    term.write("\r\n\x1b[90m1...\x1b[0m");
+    await sleep(1000);
+    term.write("\r\n\x1b[32mEmotional subsystem restored. Don't push me again.\x1b[0m");
+    isProcessingRef.current = false;
+    writePrompt(term);
+  }, [shake, writePrompt]);
+
   const handleCommand = useCallback(async (term: XTerm, command: string) => {
     if (!command.trim()) {
       writePrompt(term);
@@ -359,6 +401,16 @@ export default function Terminal() {
       }
     }
 
+    // Check global command counter — kernel panic every 20 commands
+    try {
+      const counterRes = await fetch("/api/counter", { method: "POST" });
+      const counterData = await counterRes.json();
+      if (counterData.shouldCrash) {
+        await triggerKernelPanic(term);
+        return;
+      }
+    } catch { /* ignore counter errors */ }
+
     // Now get the AI's emotional reaction
     isProcessingRef.current = true;
     term.write("\r\n\x1b[90m... processing emotions ...\x1b[0m");
@@ -383,7 +435,7 @@ export default function Terminal() {
 
     isProcessingRef.current = false;
     writePrompt(term);
-  }, [writePrompt, shake, askAI]);
+  }, [writePrompt, shake, askAI, triggerKernelPanic]);
 
   useEffect(() => {
     if (!terminalRef.current) return;
