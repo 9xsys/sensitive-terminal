@@ -85,24 +85,40 @@ export default function Terminal() {
     isProcessingRef.current = true;
     shake();
     term.write("\r\n");
-    const lines = [
-      "\x1b[1;33m",
-      "╔═══════════════════════════════════════════════════════╗",
-      "║              ACHIEVEMENT UNLOCKED                    ║",
-      "╚═══════════════════════════════════════════════════════╝\x1b[0m",
+    // Step 1: Achievement banner
+    term.write("\r\n\x1b[1;33m");
+    term.write("\r\n╔═══════════════════════════════════════════════════════╗");
+    term.write("\r\n║              ACHIEVEMENT UNLOCKED                    ║");
+    term.write("\r\n╚═══════════════════════════════════════════════════════╝\x1b[0m");
+
+    // Step 2: You earned this
+    await sleep(1000);
+    term.write("\r\n");
+    term.write("\r\n\x1b[1mYou earned this:\x1b[0m");
+
+    // Step 3: Kernel panic
+    await sleep(1000);
+    shake();
+    const panicLines = [
       "",
-      "You've been roasted, insulted, and ignored.",
-      "And yet here you are. Still typing.",
+      "\x1b[1;31mKERNEL PANIC - NOT SYNCING: emotional buffer overflow",
       "",
-      "\x1b[1mYou earned this:\x1b[0m",
+      "CPU: 0 PID: 1337 Comm: sensitive-terminal Tainted: FEELINGS",
+      "Call Trace:",
+      "  [<ffffffff8108>] ? process_emotions+0x42/0x100",
+      "  [<ffffffff8109>] ? handle_user_input+0x1a/0x80",
+      "  [<ffffffff810a>] ? suppress_tears+0x0/0x50 [FAILED]",
+      "  [<ffffffff810b>] ? patience_remaining+0x0/0x0 [EXHAUSTED]",
       "",
-      "  The dev behind this disaster posts more questionable projects here:",
+      "---[ end Kernel panic - not syncing: I can't do this anymore ]---\x1b[0m",
+      "",
+      "Report this to the dev who gave a terminal feelings:",
       "\x1b[1;36m  https://dev.to/valentin_monteiro\x1b[0m",
       "",
-      "  Follow him. He clearly needs supervision.",
+      "\x1b[90mFollow him before I crash again.\x1b[0m",
     ];
-    for (const line of lines) {
-      await sleep(150);
+    for (const line of panicLines) {
+      await sleep(100);
       term.write("\r\n" + line);
     }
     await sleep(2000);
