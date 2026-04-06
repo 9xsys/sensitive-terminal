@@ -88,8 +88,7 @@ export default function Terminal() {
     const lines = [
       "\x1b[1;33m",
       "╔═══════════════════════════════════════════════════════╗",
-      "║          ACHIEVEMENT UNLOCKED                        ║",
-      "║          You are the 20th command!                   ║",
+      "║              ACHIEVEMENT UNLOCKED                    ║",
       "╚═══════════════════════════════════════════════════════╝\x1b[0m",
       "",
       "You've been roasted, insulted, and ignored.",
