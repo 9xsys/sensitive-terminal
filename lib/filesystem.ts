@@ -121,6 +121,11 @@ export class VirtualFS {
       return "__SORRY__";
     }
 
+    // Follow / subscribe
+    if (command === "follow" || command === "subscribe") {
+      return "__FOLLOW__";
+    }
+
     // Guestbook: wall
     if (command === "wall") {
       const msg = args.join(" ").replace(/^["']|["']$/g, "");

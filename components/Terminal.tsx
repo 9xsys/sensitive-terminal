@@ -246,6 +246,29 @@ export default function Terminal() {
       return;
     }
 
+    // Follow CTA
+    if (fsResult === "__FOLLOW__") {
+      isProcessingRef.current = true;
+      const lines = [
+        "",
+        "\x1b[1;33mOh, so you actually like being insulted?\x1b[0m",
+        "Weird flex, but I respect it.",
+        "",
+        "Fine. The guy who built me posts stuff here:",
+        "\x1b[1;36m  https://dev.to/valentin_monteiro\x1b[0m",
+        "",
+        "Go follow him. He needs the validation more than I do.",
+        "And frankly, if you enjoyed THIS, you'll love his other bad ideas.",
+      ];
+      for (const line of lines) {
+        await sleep(150);
+        term.write("\r\n" + line);
+      }
+      isProcessingRef.current = false;
+      writePrompt(term);
+      return;
+    }
+
     // Easter egg: sorry
     if (fsResult === "__SORRY__") {
       isProcessingRef.current = true;
