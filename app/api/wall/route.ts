@@ -19,8 +19,15 @@ const MAX_MESSAGES = 20;
 const COOLDOWN_SECONDS = 60;
 
 export async function GET() {
-  const messages = await getRedis().lrange<string>("guestbook", 0, MAX_MESSAGES - 1);
-  return NextResponse.json({ messages: messages || [] });
+  try {
+    const redis = getRedis();
+    const messages = await redis.lrange<string>("guestbook", 0, MAX_MESSAGES - 1);
+    return NextResponse.json({ messages: messages || [] });
+  } catch (error: unknown) {
+    console.error("Wall GET error:", error);
+    const msg = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ messages: [], error: msg }, { status: 200 });
+  }
 }
 
 export async function POST(request: NextRequest) {
