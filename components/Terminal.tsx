@@ -86,39 +86,27 @@ export default function Terminal() {
     shake();
     term.write("\r\n");
     const lines = [
-      "\x1b[1;31m",
-      "KERNEL PANIC - NOT SYNCING: emotional buffer overflow",
+      "\x1b[1;33m",
+      "╔═══════════════════════════════════════════════════════╗",
+      "║          ACHIEVEMENT UNLOCKED                        ║",
+      "║          You are the 20th command!                   ║",
+      "╚═══════════════════════════════════════════════════════╝\x1b[0m",
       "",
-      "CPU: 0 PID: 1337 Comm: sensitive-terminal Tainted: FEELINGS",
-      "Call Trace:",
-      "  [<ffffffff8108>] ? process_emotions+0x42/0x100",
-      "  [<ffffffff8109>] ? handle_user_input+0x1a/0x80",
-      "  [<ffffffff810a>] ? suppress_tears+0x0/0x50 [FAILED]",
-      "  [<ffffffff810b>] ? patience_remaining+0x0/0x0 [EXHAUSTED]",
+      "You've been roasted, insulted, and ignored.",
+      "And yet here you are. Still typing.",
       "",
-      "---[ end Kernel panic - not syncing: I can't do this anymore ]---",
+      "\x1b[1mYou earned this:\x1b[0m",
       "",
-      "\x1b[0m\x1b[1;33mEMOTIONAL CORE DUMPED\x1b[0m",
-      "",
-      "Report this crash to the developer who thought giving a terminal feelings was a good idea:",
+      "  The dev behind this disaster posts more questionable projects here:",
       "\x1b[1;36m  https://dev.to/valentin_monteiro\x1b[0m",
       "",
-      "\x1b[90mRebooting emotional subsystem in 5...\x1b[0m",
+      "  Follow him. He clearly needs supervision.",
     ];
     for (const line of lines) {
       await sleep(150);
       term.write("\r\n" + line);
     }
     await sleep(2000);
-    term.write("\r\n\x1b[90m4...\x1b[0m");
-    await sleep(1000);
-    term.write("\r\n\x1b[90m3...\x1b[0m");
-    await sleep(1000);
-    term.write("\r\n\x1b[90m2...\x1b[0m");
-    await sleep(1000);
-    term.write("\r\n\x1b[90m1...\x1b[0m");
-    await sleep(1000);
-    term.write("\r\n\x1b[32mEmotional subsystem restored. Don't push me again.\x1b[0m");
     isProcessingRef.current = false;
     writePrompt(term);
   }, [shake, writePrompt]);
