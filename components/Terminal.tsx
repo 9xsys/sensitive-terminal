@@ -87,41 +87,52 @@ export default function Terminal() {
     term.write("\r\n");
     // Step 1: Achievement banner
     term.write("\r\n\x1b[1;33m");
+    await sleep(300);
     term.write("\r\n╔═══════════════════════════════════════════════════════╗");
+    await sleep(300);
     term.write("\r\n║              ACHIEVEMENT UNLOCKED                    ║");
+    await sleep(300);
     term.write("\r\n╚═══════════════════════════════════════════════════════╝\x1b[0m");
 
     // Step 2: You earned this
-    await sleep(1000);
+    await sleep(500);
     term.write("\r\n");
     term.write("\r\n\x1b[1mYou earned this:\x1b[0m");
 
-    // Step 3: Kernel panic
-    await sleep(1000);
+    // Step 3: Kernel panic — lines appear one by one
+    await sleep(500);
     shake();
-    const panicLines = [
-      "",
-      "\x1b[1;31mKERNEL PANIC - NOT SYNCING: emotional buffer overflow",
-      "",
-      "CPU: 0 PID: 1337 Comm: sensitive-terminal Tainted: FEELINGS",
-      "Call Trace:",
-      "  [<ffffffff8108>] ? process_emotions+0x42/0x100",
-      "  [<ffffffff8109>] ? handle_user_input+0x1a/0x80",
-      "  [<ffffffff810a>] ? suppress_tears+0x0/0x50 [FAILED]",
-      "  [<ffffffff810b>] ? patience_remaining+0x0/0x0 [EXHAUSTED]",
-      "",
-      "---[ end Kernel panic - not syncing: I can't do this anymore ]---\x1b[0m",
-      "",
-      "Report this to the dev who gave a terminal feelings:",
-      "\x1b[1;36m  https://dev.to/valentin_monteiro\x1b[0m",
-      "",
-      "\x1b[90mFollow him before I crash again.\x1b[0m",
-    ];
-    for (const line of panicLines) {
-      await sleep(100);
-      term.write("\r\n" + line);
-    }
-    await sleep(2000);
+    term.write("\r\n");
+    await sleep(300);
+    term.write("\r\n\x1b[1;31mKERNEL PANIC - NOT SYNCING: emotional buffer overflow\x1b[0m");
+    await sleep(400);
+    term.write("\r\n");
+    await sleep(200);
+    term.write("\r\n\x1b[1;31mCPU: 0 PID: 1337 Comm: sensitive-terminal Tainted: FEELINGS\x1b[0m");
+    await sleep(300);
+    term.write("\r\n\x1b[31mCall Trace:\x1b[0m");
+    await sleep(250);
+    term.write("\r\n\x1b[31m  [<ffffffff8108>] ? process_emotions+0x42/0x100\x1b[0m");
+    await sleep(250);
+    term.write("\r\n\x1b[31m  [<ffffffff8109>] ? handle_user_input+0x1a/0x80\x1b[0m");
+    await sleep(250);
+    term.write("\r\n\x1b[31m  [<ffffffff810a>] ? suppress_tears+0x0/0x50 [FAILED]\x1b[0m");
+    await sleep(250);
+    term.write("\r\n\x1b[31m  [<ffffffff810b>] ? patience_remaining+0x0/0x0 [EXHAUSTED]\x1b[0m");
+    await sleep(400);
+    term.write("\r\n");
+    await sleep(300);
+    term.write("\r\n\x1b[1;31m---[ end Kernel panic - not syncing: I can't do this anymore ]---\x1b[0m");
+    await sleep(500);
+    term.write("\r\n");
+    await sleep(300);
+    term.write("\r\nReport this to the dev who gave a terminal feelings:");
+    await sleep(300);
+    term.write("\r\n\x1b[1;36m  https://dev.to/valentin_monteiro\x1b[0m");
+    await sleep(400);
+    term.write("\r\n");
+    term.write("\r\n\x1b[90mFollow him before I crash again.\x1b[0m");
+    await sleep(1500);
     isProcessingRef.current = false;
     writePrompt(term);
   }, [shake, writePrompt]);
